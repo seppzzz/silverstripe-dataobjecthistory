@@ -19,6 +19,10 @@ use Symbiote\GridFieldExtensions\GridFieldTitleHeader;
 use gorriecoe\DataObjectHistory\Forms\GridFieldHistoryButton;
 use gorriecoe\DataObjectHistory\Forms\HistoryGridFieldItemRequest;
 
+use SilverStripe\Versioned\VersionedGridFieldState\VersionedGridFieldState;
+
+use SilverStripe\Dev\Debug;
+
 /**
  * DataObjectHistory
  *
@@ -49,10 +53,15 @@ class DataObjectHistory extends DataExtension
      */
     public function getHistoryFields()
     {
-        $owner = $this->owner;
+       
+		$owner = $this->owner;
         if (!$owner->isLatestVersion()) {
             return null;
         }
+		
+		
+		//Debug::show($owner->ID);
+		
 
         $config = GridFieldConfig_RecordViewer::create()
             ->removeComponentsByType([
@@ -63,13 +72,15 @@ class DataObjectHistory extends DataExtension
                 GridFieldViewButton::class
             ])
             ->addComponent(new GridFieldTitleHeader)
-            ->addComponent(new GridFieldHistoryButton);
+            ->addComponent(new GridFieldHistoryButton)
+		->addComponent(new VersionedGridFieldState());
         $config->getComponentByType(GridFieldDetailForm::class)
             ->setItemRequestClass(HistoryGridFieldItemRequest::class);
-        $config->getComponentByType(GridFieldDataColumns::class)
+		
+       $config->getComponentByType(GridFieldDataColumns::class)
             ->setDisplayFields([
                 'Version' => '#',
-                'LastEdited.Nice' => _t(__CLASS__ . '.WHEN', 'When'),
+                'LastEdited.Nice' => _t(__CLASS__ . '.WHEN', 'Version'),
                 'Title' => _t(__CLASS__ . '.TITLE', 'Title'),
                 'Author.Name' => _t(__CLASS__ . '.AUTHOR', 'Author')
             ]);
@@ -81,7 +92,7 @@ class DataObjectHistory extends DataExtension
                 Versioned::get_all_versions(
                     $owner->ClassName,
                     $owner->ID
-                )
+                )->filter(['PublisherID:not' => 0])
                 ->sort('Version', 'DESC'),
                 $config
             )
