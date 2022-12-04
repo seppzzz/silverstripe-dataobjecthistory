@@ -14,6 +14,8 @@ use SilverStripe\Versioned\VersionedGridFieldItemRequest;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\View\ArrayData;
 
+use SilverStripe\Dev\Debug;
+
 /**
  * DataObjectHistory
  *
@@ -116,8 +118,17 @@ class HistoryGridFieldItemRequest extends VersionedGridFieldItemRequest
             return $this->httpError(403);
         }
 
-        // Save from form data
-        $record->doRollbackTo($record->Version);
+		
+		//Debug::show($record->Version);
+		
+		//Save from form data
+		//$record->doRollbackTo($record->Version);
+		$record->rollbackSingle($record->Version);
+
+		// The live version of the record won't be affected unless you publish you're rolled back record.
+		$record->publishRecursive();
+		
+		
         $link = '<a href="' . $this->Link('edit') . '">"'
             . htmlspecialchars($record->Title, ENT_QUOTES)
             . '"</a>';
